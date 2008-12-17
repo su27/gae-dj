@@ -1,0 +1,57 @@
+<html>
+<head>
+<script type="text/javascript" src="/static/jquery.js"></script>
+<script type="text/javascript">
+function tr(){
+    if(window.console && window.console.log){$(arguments).each(function(){console.log(this)})}; //rm
+};
+djserver = "http://localhost:8080/";
+$.extend({ nload : function(file,callback){
+    var e = document.createElement('script');
+    e.setAttribute('language','javascript');
+    e.setAttribute('type','text/javascript');
+    e.setAttribute('src',file);
+    $('head')[0].appendChild(e);
+    if(callback){
+        if($.browser.msie){
+            e.onreadystatechange = function(){
+                if(this.readyState==='loaded'||
+                    this.readyState==='complete'){
+                    callback()
+                }
+            }
+        } else { e.onload = callback }
+    }
+    },djsend:function(url,callback){
+    tr('url = '+url);
+    $.nload(djserver+url+(url.indexOf('?') == -1? '?':'&')
+        +'callback='+callback);
+    }
+})
+
+killall = function(r){
+    tr(r);
+    var id;
+    for(var i=0;i<r.length;i++){
+        $.djsend('delete/mm/'+r[i].id, 'tr');
+    }
+}
+
+$(function(){
+    $.djsend('model/mm?keys=name,height','tr')
+    $.djsend('model/mm?keys=name,age,beau','tr')
+    $.djsend('post/mm?data={"name":"kit","beau":"C","age":"24"}','tr')
+    $.djsend('post/mm?data={"name":"Bil","beau":"C","age":"34"}','tr')
+    $.djsend('post/mm?data={"name":"lily","beau":"C","age":"14"}','tr')
+    $.djsend('post/mm?data={"name":"Ric","beau":"B","age":"15"}','tr')
+    $.djsend('post/mm?data={"name":"Mie","beau":"B","age":"25"}','tr')
+    $.djsend('view/mm/beau/C','killall')
+    $.djsend('view/mm/beau/B','killall')
+})
+
+</script>
+</head>
+<body>
+    watch the console
+</body>
+</html>
