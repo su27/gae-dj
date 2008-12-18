@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import cgi
+import re
 import logging
 from urllib import unquote,quote
 from datetime import datetime
@@ -20,7 +21,7 @@ class Modinfo(db.Model):
     keys = db.StringListProperty()
     # 'owner', 'author', whatever
     canwrite = db.StringProperty()
-    candelete = db.StringProperty()
+    canmodify = db.StringProperty()
     canread = db.StringProperty()
 
 class Record(db.Expando):
@@ -28,31 +29,49 @@ class Record(db.Expando):
     djauthor = db.UserProperty()
 
 op_map = {'gt':'>', 'lt':'<', 'in':'IN', 'eq':'='}
+err_map = {1:'not enough arguments',
+           2:'cannot modify the model,maybe need login',
+           3:'need some parameters',
+           4:'login required',
+           5:'you cannot write on the model',
+           6:'you cannot read the model',
+           7:'cannot get record with such id',
+           8:'you cannot delete the record',
+           9:'contains a field name that is not allowed',
+          }
+
+def needparas(n):
+    def pre(f):
+        def wrap(req):
+            paras = re.split('\/|\?.*',req.path[1:])
+            req.paras = [p for p in paras if p!='']
+            return len(req.paras)<n and msg(1) or f(req)
+        return wrap
+    return pre
 
 def greeting(user, redir='/'):
-    return user and ("<strong>%s</strong> (<a href='%s'>\
-            logout</a>)" % (user.nickname().split('@')[0],
+    return user and (
+            "<strong>%s</strong> (<a href='%s'> logout</a>)" 
+            % (user.nickname().split('@')[0],
             users.create_logout_url(redir))) or \
             ("<a href='%s'>login with Google account</a>" %
             users.create_login_url(redir))
 
-def msg(errno):
+def msg(errno,**res):
     if errno == 0:
-        return {'success':1}
-    err_map = {1:'not enough arguments',
-                2:'cannot modify the model,maybe need login',
-                3:'need some parameters',
-                4:'login required',
-                5:'you cannot write on the model',
-                6:'you cannot read the model',
-                7:'cannot get record with such id',
-                8:'you cannot delete the record',
-                9:'contains a field name that is not allowed',
-                }
-    return {'success':0,'error':err_map[errno]}
+        res['success'] = 1
+    else:
+        res['success'] = 0
+        res['error'] = err_map[errno]
+    return res
 
 def authmod(modname,d=None):
-    mod = Modinfo.all().filter('djname =',modname)
+    global user
+    mod = memcache.get('modinfo:'+modname)
+    if mod is None:
+        mod = Modinfo.all().filter('djname =',modname)
+        if not memcache.add('modinfo:'+modname, mod, 3600*24*7):
+            logging.error('memcache failed')
     if mod.count() == 0:
         return {'canwrite':False,'canread':False,
                 'canmodify':(user!=None),'modinfo':None}
@@ -63,18 +82,16 @@ def authmod(modname,d=None):
                 }
     return {'canwrite':can_do_as.get(m.canwrite,True), 
             'canread':can_do_as.get(m.canread,True),
-            'candelete':can_do_as.get(m.candelete,False),
+            'canmodify':can_do_as.get(m.canmodify,False),
             'canmodify':can_do_as.get('owner'),
             'modinfo':m,
             }
 
+@needparas(2)
 def handle_post(request):
     data = request.get('data','{}')
     data = simplejson.loads(data)
-    paras = request.path[1:].split('/')
-    if len(paras)<2:
-        return msg(1)
-    modname = paras[1]
+    modname = request.paras[1]
     if not authmod(modname)['canwrite']:
         return msg(5)
     da = {}
@@ -83,17 +100,34 @@ def handle_post(request):
     rec = Record(djname=modname,**da)
     rec.put()
     memcache.delete('djname:'+modname)
+    return msg(0,id=rec.key().id())
+
+@needparas(2)
+def handle_modify(request):
+    paras = request.paras
+    modname, id = paras[1], paras[2]
+    try:
+        r = Record.get_by_id(int(id))
+    except:
+        return msg(7)
+    data = request.get('data','{}')
+    data = simplejson.loads(data)
+    da = {}
+    for k in data:
+        exec('r.'+str(k) +' = "'+ str(data[k])+'"')
+    r.put()
+    memcache.delete('djname:'+modname)
     return msg(0)
 
+@needparas(2)
 def handle_view(request):
+    global user
+    paras = request.paras
     op = request.get('op',None)
     try:
         op = op_map[op]
     except:
         op = '='
-    paras = request.path[1:].split('/')
-    if len(paras)<2:
-        return msg(1)
     modname = paras[1]
     info = authmod(modname)
     if not info['canread']:
@@ -131,27 +165,24 @@ def handle_view(request):
         res.append(ob)
     return res
 
+@needparas(3)
 def handle_delete(request):
-    paras = request.path[1:].split('/')
-    if len(paras)<3:
-        return msg(1)
+    paras = request.paras
     modname = paras[1]
     id = paras[2]
     try:
         r = Record.get_by_id(int(id))
     except:
         return msg(7)
-    if not authmod(modname,d=r)['candelete']:
+    if not authmod(modname,d=r)['canmodify']:
         return msg(8)
     r.delete()
     memcache.delete('djname:'+modname)
     return msg(0)
 
+@needparas(2)
 def handle_model(request):
-    paras = request.path[1:].split('/')
-    if len(paras)<2:
-        return msg(1)
-    modname = paras[1]
+    modname = request.paras[1]
     info = authmod(modname)
     if not info['canmodify']:
         return msg(2)
@@ -162,8 +193,9 @@ def handle_model(request):
         return msg(9)
     m.canwrite = request.get('canwrite','all')
     m.canread = request.get('canread','all')
-    m.candelete = request.get('candelete','author')
+    m.canmodify = request.get('canmodify','author')
     m.put()
+    memcache.delete('modinfo:'+modname)
     return msg(0)
 
 class AllHandler(webapp.RequestHandler):
@@ -185,13 +217,17 @@ class DeleteHandler(AllHandler):
     def get(self):
         self.jsout(handle_delete(self.request))
 
+class ModifyHandler(AllHandler):
+    def get(self):
+        self.jsout(handle_modify(self.request))
+
 class ModelHandler(AllHandler):
     def get(self):
         self.jsout(handle_model(self.request))
 
 class MainHandler(webapp.RequestHandler):
     def get(self):
-        self.response.out.write(greeting(users))
+        self.response.out.write(greeting(user))
 
 def main():
     application = webapp.WSGIApplication([('/', MainHandler),
@@ -199,6 +235,7 @@ def main():
                                     ('/delete/.*', DeleteHandler),
                                     ('/view/.*', ViewHandler),
                                     ('/model/.*',ModelHandler),
+                                    ('/modify/.*',ModifyHandler),
                                         ], debug=True)
     wsgiref.handlers.CGIHandler().run(application)
 
