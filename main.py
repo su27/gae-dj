@@ -96,7 +96,11 @@ def handle_post(request):
         return msg(5)
     da = {}
     for k in data:
-        da[str(k)] = str(data[k])
+        try:
+            v = int(data[k])
+        except:
+            v = str(data[k])
+        da[str(k)] = v
     rec = Record(djname=modname,**da)
     rec.put()
     memcache.delete('djname:'+modname)
@@ -117,21 +121,21 @@ def handle_modify(request):
         exec('r.'+str(k) +' = "'+ str(data[k])+'"')
     r.put()
     memcache.delete('djname:'+modname)
-    return msg(0)
+    return msg(0,id=r.key().id())
 
 @needparas(2)
 def handle_view(request):
     global user
     paras = request.paras
     op = request.get('op',None)
-    try:
-        op = op_map[op]
-    except:
-        op = '='
     modname = paras[1]
     info = authmod(modname)
     if not info['canread']:
         return msg(6)
+    try:
+        op = op_map[op]
+    except:
+        op = '='
     
     records = memcache.get('djname:'+modname)
     if records is None:
@@ -151,7 +155,16 @@ def handle_view(request):
         elif paras[2] == 'mydj':
             records.filter('author =',user)
         else:
-            records.filter('%s %s' % (paras[2],op), paras[3])
+            if op in ['<','>']:
+                try:
+                    v = int(paras[3])
+                except ValueError:
+                    pass
+            elif op == 'IN':
+                v = paras[3].split(',')
+            else:
+                v = paras[3]
+            records.filter('%s %s' % (paras[2],op), v)
 
     res = []
     for r in records:
@@ -227,6 +240,7 @@ class ModelHandler(AllHandler):
 
 class MainHandler(webapp.RequestHandler):
     def get(self):
+        global user
         self.response.out.write(greeting(user))
 
 def main():
