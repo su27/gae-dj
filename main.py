@@ -42,15 +42,6 @@ err_map = {1:'not enough arguments',
            9:'contains a field name that is not allowed',
           }
 
-def needparas(n):
-    def pre(f):
-        def wrap(req):
-            paras = re.split('\/|\?.*',req.path[1:])
-            req.paras = [p for p in paras if p!='']
-            return len(req.paras)<n and msg(1) or f(req)
-        return wrap
-    return pre
-
 def greeting(user, redir='/'):
     return user and (
             "<strong>%s</strong> (<a href='%s'> logout</a>)" 
@@ -58,6 +49,15 @@ def greeting(user, redir='/'):
             users.create_logout_url(redir))) or \
             ("<a href='%s'>login with Google account</a>" %
             users.create_login_url(redir))
+
+def needparas(n):
+    def pre(f):
+        def wrap(req):
+            paras = req.path[1:].split('/')
+            req.paras = [p for p in paras if p!='']
+            return len(req.paras)<n and msg(1) or f(req)
+        return wrap
+    return pre
 
 def msg(errno,**res):
     if errno == 0:
@@ -122,7 +122,11 @@ def handle_modify(request):
     data = simplejson.loads(data)
     da = {}
     for k in data:
-        exec('r.'+str(k) +' = "'+ str(data[k])+'"')
+        try:
+            v = int(data[k])
+        except:
+            v = data[k]
+        exec('r.'+str(k) +'= v')
     r.put()
     memcache.delete('djname:'+modname)
     return msg(0,id=r.key().id())

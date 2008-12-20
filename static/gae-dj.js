@@ -28,7 +28,7 @@ Gaedj.prototype.nload = function(file,callback){
     }
 }
 
-Gaedj.prototype.djsend = function(url,cb){
+Gaedj.prototype.send = function(url,cb){
     var url = this.server+url+(url.indexOf('?') == -1? '?':'&')
         +'callback=Gaedj.cb['+Gaedj.addcb(cb)+']'
     this.nload(url);

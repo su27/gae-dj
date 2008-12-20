@@ -11,24 +11,26 @@ function tr(){
 var dj = new Gaedj();
 
 var killall = function(r){
-    tr('I have to kill:',r);
+    tr('ok,I have to kill:',r);
     for(var i=0;i<r.length;i++){
-        dj.djsend('delete/mm/'+r[i].id, function(r){tr('kill:',r.success)});
+        dj.send('delete/mm/'+r[i].id, function(r){tr('kill:',r.success)});
     }
 }
 
 $(function(){
-    dj.djsend('model/mm?keys=name,height',tr);
-    dj.djsend('model/mm?keys=name,age,beau',function(r){tr('alter the model',r)});
-    dj.djsend('post/mm?data={"name":"卡拉","beau":"C","age":"34"}',tr);
-    dj.djsend('post/mm?data={"name":"Ric","beau":"B","age":"15"}',tr);
-    dj.djsend('post/mm?data={"name":"kit","beau":"C","age":"24"}',function(r){
-        tr(r.id,' in data, lets modify this one');
-        dj.djsend('modify/mm/'+r.id+'?data={"name":"momo","beau":"B"}',function(r){
+    dj.send('model/mm?keys=name,height',function(r){
+        tr('try to make a model',r.success)
+    });
+    dj.send('model/mm?keys=name,age,beau',function(r){tr('alter the model',r)});
+    dj.send('post/mm?data={"name":"卡拉","beau":"C","age":"34"}',tr);
+    dj.send('post/mm?data={"name":"Ric","beau":"B","age":"15"}',tr);
+    dj.send('post/mm?data={"name":"kit","beau":"C","age":"24"}',function(r){
+        tr(r.id,' is ok, lets modify this one');
+        dj.send('modify/mm/'+r.id+'?data={"name":"中文","beau":"B"}',function(r){
             tr('modify:',r.success);
-            dj.djsend('view/mm/B,C?op=in',tr);
-            dj.djsend('view/mm/beau/C',killall);
-            dj.djsend('view/mm/beau/B',killall)
+            dj.send('view/mm/B,C?op=in',tr);
+            dj.send('view/mm/beau/C',killall);
+            dj.send('view/mm/beau/B',killall)
         })
     })
 })
