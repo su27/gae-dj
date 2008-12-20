@@ -1,0 +1,21 @@
+RESTful api for GAE database writing/reading.
+
+static/test.html
+
+
+$.djsend('model/mm?keys=name,height','tr')
+$.djsend('model/mm?keys=name,age,beau','tr')
+$.djsend('post/mm?data={"name":"卡拉","beau":"C","age":"34"}','tr')
+$.djsend('post/mm?data={"name":"lily","beau":"C","age":"14"}','tr')
+$.djsend('post/mm?data={"name":"Ric","beau":"B","age":"15"}','tr')
+$.djsend('post/mm?data={"name":"Mie","beau":"B","age":"25"}','tr')
+$.djsend('post/mm?data={"name":"kit","beau":"C","age":"24"}','modi')
+
+$.djsend('modify/mm/'+r.id+'?data={"name":"momo","beau":"B","age":"24"}','doall')
+
+$.djsend('view/mm/B,C?op=in','tr')
+$.djsend('view/mm/beau/C','killall')
+$.djsend('view/mm/beau/B','killall')
+$.djsend('view/mm/age/20?op=gt','killall')
+
+$.djsend('delete/mm/'+r[i].id, 'tr');

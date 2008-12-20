@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+#coding=utf-8
 
 import cgi
 import re
@@ -21,6 +22,7 @@ class Modinfo(db.Model):
     keys = db.StringListProperty()
     # 'owner', 'author', whatever
     canwrite = db.StringProperty()
+    canedit= db.StringProperty()
     canmodify = db.StringProperty()
     canread = db.StringProperty()
 
@@ -73,7 +75,7 @@ def authmod(modname,d=None):
         if not memcache.add('modinfo:'+modname, mod, 3600*24*7):
             logging.error('memcache failed')
     if mod.count() == 0:
-        return {'canwrite':False,'canread':False,
+        return {'canwrite':False,'canread':False,'canedit':False,
                 'canmodify':(user!=None),'modinfo':None}
     m = mod[0]
     can_do_as = {'owner':(m.acc==user),
@@ -82,7 +84,7 @@ def authmod(modname,d=None):
                 }
     return {'canwrite':can_do_as.get(m.canwrite,True), 
             'canread':can_do_as.get(m.canread,True),
-            'canmodify':can_do_as.get(m.canmodify,False),
+            'canedit':can_do_as.get(m.canedit,False),
             'canmodify':can_do_as.get('owner'),
             'modinfo':m,
             }
@@ -99,12 +101,12 @@ def handle_post(request):
         try:
             v = int(data[k])
         except:
-            v = str(data[k])
+            v = data[k]
         da[str(k)] = v
-    rec = Record(djname=modname,**da)
-    rec.put()
+    r = Record(djname=modname,**da)
+    r.put()
     memcache.delete('djname:'+modname)
-    return msg(0,id=rec.key().id())
+    return msg(0,id=r.key().id())
 
 @needparas(2)
 def handle_modify(request):
@@ -114,6 +116,8 @@ def handle_modify(request):
         r = Record.get_by_id(int(id))
     except:
         return msg(7)
+    if not authmod(modname,d=r)['canedit']:
+        return msg(8)
     data = request.get('data','{}')
     data = simplejson.loads(data)
     da = {}
@@ -132,10 +136,7 @@ def handle_view(request):
     info = authmod(modname)
     if not info['canread']:
         return msg(6)
-    try:
-        op = op_map[op]
-    except:
-        op = '='
+    op = op_map.get(op, '=')
     
     records = memcache.get('djname:'+modname)
     if records is None:
@@ -187,7 +188,7 @@ def handle_delete(request):
         r = Record.get_by_id(int(id))
     except:
         return msg(7)
-    if not authmod(modname,d=r)['canmodify']:
+    if not authmod(modname,d=r)['canedit']:
         return msg(8)
     r.delete()
     memcache.delete('djname:'+modname)
@@ -206,7 +207,7 @@ def handle_model(request):
         return msg(9)
     m.canwrite = request.get('canwrite','all')
     m.canread = request.get('canread','all')
-    m.canmodify = request.get('canmodify','author')
+    m.canedit = request.get('canedit','author')
     m.put()
     memcache.delete('modinfo:'+modname)
     return msg(0)
@@ -215,6 +216,7 @@ class AllHandler(webapp.RequestHandler):
     def jsout(self,json):
         self.response.headers["Content-Type"] = "text/javascript"
         callback = self.request.get('callback','//')
+        #self.response.out.write('tr("%s");' % self.request.url)
         s = '%s(%s);' % (callback, simplejson.dumps(json))
         self.response.out.write(s)
 
@@ -240,8 +242,7 @@ class ModelHandler(AllHandler):
 
 class MainHandler(webapp.RequestHandler):
     def get(self):
-        global user
-        self.response.out.write(greeting(user))
+        self.response.out.write(greeting(users.GetCurrentUser()))
 
 def main():
     application = webapp.WSGIApplication([('/', MainHandler),
@@ -250,6 +251,7 @@ def main():
                                     ('/view/.*', ViewHandler),
                                     ('/model/.*',ModelHandler),
                                     ('/modify/.*',ModifyHandler),
+                                    ('/.*',MainHandler),
                                         ], debug=True)
     wsgiref.handlers.CGIHandler().run(application)
 
