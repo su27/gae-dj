@@ -40,6 +40,7 @@ err_map = {1:'not enough arguments',
            7:'cannot get record with such id',
            8:'you cannot delete the record',
            9:'contains a field name that is not allowed',
+           10:'error when querying data',
           }
 
 def greeting(user, redir='/'):
@@ -141,7 +142,7 @@ def handle_view(request):
     if not info['canread']:
         return msg(6)
     op = op_map.get(op, '=')
-    
+
     records = memcache.get('djname:'+modname)
     if records is None:
         records = Record.all().filter('djname =', modname)
@@ -166,10 +167,13 @@ def handle_view(request):
                 except ValueError:
                     pass
             elif op == 'IN':
-                v = paras[3].split(',')
+                v = paras[3].split('_')
+                records = Record.gql(
+                        'WHERE djname = :name AND %s IN :v' 
+                        % paras[2], name=modname,v=v)
             else:
                 v = paras[3]
-            records.filter('%s %s' % (paras[2],op), v)
+                records.filter('%s %s' % (paras[2],op), v)
 
     res = []
     for r in records:
@@ -202,11 +206,13 @@ def handle_delete(request):
 def handle_model(request):
     modname = request.paras[1]
     info = authmod(modname)
+    #logging.info(info)
     if not info['canmodify']:
         return msg(2)
     m = info['modinfo'] and info['modinfo'] or Modinfo(acc=user, \
             djname=modname)
     m.keys = request.get('keys','').split(',')
+    #TODO: validate keys
     if ('id' in m.keys) or ('mydj' in m.keys):
         return msg(9)
     m.canwrite = request.get('canwrite','all')
@@ -227,6 +233,8 @@ class AllHandler(webapp.RequestHandler):
 class PostHandler(AllHandler):
     def get(self):
         self.jsout(handle_post(self.request))
+    def post(self):
+        self.jsout(handle_post(self.request))
 
 class ViewHandler(AllHandler):
     def get(self):
@@ -238,6 +246,8 @@ class DeleteHandler(AllHandler):
 
 class ModifyHandler(AllHandler):
     def get(self):
+        self.jsout(handle_modify(self.request))
+    def post(self):
         self.jsout(handle_modify(self.request))
 
 class ModelHandler(AllHandler):

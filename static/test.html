@@ -5,10 +5,9 @@
 <script type="text/javascript">
 function tr(){
     $('#con').append($('<div></div>').html(Array.prototype.join.apply(arguments)));
-    if(window.console && window.console.log){$(arguments).each(function(){console.info(this)})}; //rm
+    if(window.console && window.console.log){$(arguments).each(function(){console.info(this)})}; 
 };
 
-var dj = new Gaedj();
 
 var killall = function(r){
     tr('ok,I have to kill:',r);
@@ -18,6 +17,7 @@ var killall = function(r){
 }
 
 $(function(){
+    var dj = new Gaedj();
     dj.send('model/mm?keys=name,height',function(r){
         tr('try to make a model',r.success)
     });
@@ -28,7 +28,7 @@ $(function(){
         tr(r.id,' is ok, lets modify this one');
         dj.send('modify/mm/'+r.id+'?data={"name":"中文","beau":"B"}',function(r){
             tr('modify:',r.success);
-            dj.send('view/mm/B,C?op=in',tr);
+            dj.send('view/mm/beau/B_C?op=in',function(r){tr('"IN" query:',r)});
             dj.send('view/mm/beau/C',killall);
             dj.send('view/mm/beau/B',killall)
         })

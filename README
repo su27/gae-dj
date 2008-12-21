@@ -1,21 +1,35 @@
-RESTful api for GAE database writing/reading.
+GAE-DJ: RESTful api for GAE database writing/reading.
 
-static/test.html
+create(must login) or modify(must be creator) model:
+    get /model/[MODEL_NAME]?[PARAS]
+
+    PARAS can be:
+    keys=key1,key2,key3,...     (required)
+    canread=[all(default)|author|owner]
+    canwrite=[all(default)|author|owner]
+    canedit=[all|author(default)|owner]
+
+insert record:
+    get/post /post/[MODEL_NAME]?data={JSON}
+
+modify record:
+    get/post /modify/[MODEL_NAME]?data={JSON}
+
+view record(s):
+    get /view/[MODEL_NAME]/[KEY]/[VALUE]?op=[eq(default)|gt|lt|in]
+
+    example:
+    get /view/mm/marks/S'
+    get /view/mm/marks/B_C_D?op=in'
+
+delete record:
+    get /delete/[MODEL_NAME]/[ID]
 
 
-$.djsend('model/mm?keys=name,height','tr')
-$.djsend('model/mm?keys=name,age,beau','tr')
-$.djsend('post/mm?data={"name":"卡拉","beau":"C","age":"34"}','tr')
-$.djsend('post/mm?data={"name":"lily","beau":"C","age":"14"}','tr')
-$.djsend('post/mm?data={"name":"Ric","beau":"B","age":"15"}','tr')
-$.djsend('post/mm?data={"name":"Mie","beau":"B","age":"25"}','tr')
-$.djsend('post/mm?data={"name":"kit","beau":"C","age":"24"}','modi')
+how to use js client:
 
-$.djsend('modify/mm/'+r.id+'?data={"name":"momo","beau":"B","age":"24"}','doall')
-
-$.djsend('view/mm/B,C?op=in','tr')
-$.djsend('view/mm/beau/C','killall')
-$.djsend('view/mm/beau/B','killall')
-$.djsend('view/mm/age/20?op=gt','killall')
-
-$.djsend('delete/mm/'+r[i].id, 'tr');
+<script type="text/javascript" src="/static/gae-dj.js"></script>
+var dj = new Gaedj();
+dj.send('model/mm?keys=name,height',function(r){
+    alert('try to make a model:'+r.success)
+});
