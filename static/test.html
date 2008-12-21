@@ -19,9 +19,11 @@ var killall = function(r){
 
 $(function(){
     dj.send('model/mm?keys=name,height',function(r){
-        tr('try to make a model or test if ',r.success)
+        tr('try to make a model',r.success)
     });
-    dj.send('model/mm?keys=name,age,beau',function(r){tr('alter the model',r)});
+    dj.send('model/mm?keys=name,age,beau',function(r){
+        tr('try to alter the model',r)
+    });
     dj.send('post/mm?data={"name":"卡拉","beau":"C","age":"34"}',tr);
     dj.send('post/mm?data={"name":"Ric","beau":"B","age":"15"}',tr);
     dj.send('post/mm?data={"name":"kit","beau":"C","age":"24"}',function(r){
