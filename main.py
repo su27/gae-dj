@@ -14,8 +14,6 @@ from google.appengine.api import users
 from google.appengine.api import memcache
 import simplejson
 
-user = users.GetCurrentUser()
-
 class Modinfo(db.Model):
     acc = db.UserProperty()
     djname = db.StringProperty()
@@ -69,7 +67,7 @@ def msg(errno,**res):
     return res
 
 def authmod(modname,d=None):
-    global user
+    user = users.GetCurrentUser()
     mod = memcache.get('modinfo:'+modname)
     if mod is None:
         mod = Modinfo.all().filter('djname =',modname)
@@ -79,8 +77,8 @@ def authmod(modname,d=None):
         return {'canwrite':False,'canread':False,'canedit':False,
                 'canmodify':(user!=None),'modinfo':None}
     m = mod[0]
-    can_do_as = {'owner':(m.acc==user),
-                'author':(m.acc==user or \
+    can_do_as = {'owner':(user and m.acc==user),
+                'author':user and (m.acc==user or \
                         (d and d.djauthor==user)),
                 }
     return {'canwrite':can_do_as.get(m.canwrite,True), 
@@ -92,6 +90,7 @@ def authmod(modname,d=None):
 
 @needparas(2)
 def handle_post(request):
+    user = users.GetCurrentUser()
     data = request.get('data','{}')
     data = simplejson.loads(data)
     modname = request.paras[1]
@@ -104,7 +103,7 @@ def handle_post(request):
         except:
             v = data[k]
         da[str(k)] = v
-    r = Record(djname=modname,**da)
+    r = Record(djname=modname, djauthor=user, **da)
     r.put()
     memcache.delete('djname:'+modname)
     return msg(0,id=r.key().id())
@@ -134,7 +133,7 @@ def handle_modify(request):
 
 @needparas(2)
 def handle_view(request):
-    global user
+    user = users.GetCurrentUser()
     paras = request.paras
     op = request.get('op',None)
     modname = paras[1]
@@ -195,6 +194,8 @@ def handle_delete(request):
     try:
         r = Record.get_by_id(int(id))
     except:
+        return msg(7)
+    if r is None:
         return msg(7)
     if not authmod(modname,d=r)['canedit']:
         return msg(8)
