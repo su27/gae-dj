@@ -39,6 +39,7 @@ get/post /fetch?data={JSON}
         method: GET|POST|PUT|DELETE|HEAD
         fields: {"key":"value"} (for POST/PUT)
         headers:{'Content-Type': 'application/x-www-form-urlencoded'}
+        decode: GBK|...
 
     response:
             {'content':result.content,
@@ -54,11 +55,15 @@ get /profile
 
 ********************how to use js client******************
 
+just check /static/*.html as demos!
+
 <script type="text/javascript" src="/static/gae-dj.js"></script>
 var dj = new Gaedj();
 dj.send('model/mm?keys=name,height',function(r){
     alert('try to make a model:'+r.success)
 });
 
-just check /static/*.html as demos
+dj.send('fetch?data={"url":"http://g.cn/","decode":"gbk"}',function(r){
+        $('#con').html(r.content)
+})
 

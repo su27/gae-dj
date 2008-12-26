@@ -9,7 +9,8 @@ function tr(){
 
 
 var dj = new Gaedj();
-dj.send('fetch?data={"url":"http://google.com/search?q=dead"}',
+//dj.send('fetch?data={"url":"http://www.baidu.com/","decode":"gbk"}',
+dj.send('fetch?data={"url":"http://www.google.cn/","decode":"gbk"}',
     function(r){
         tr(r);
         $('#con').html(r.content)

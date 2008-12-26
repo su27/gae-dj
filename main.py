@@ -246,6 +246,7 @@ def handle_fetch(request):
     fetchreq = {'url':url,'method':met_map.get(met, urlfetch.GET)}
     fields = data.get('fields',None)
     headers = data.get('headers',None)
+    codec = data.get('decode',None)
     if fields is not None:
         fetchreq['payload'] = urlencode(fields)
     if headers is not None:
@@ -259,9 +260,16 @@ def handle_fetch(request):
         return msg(13,url=url)
     except:
         return msg(14,url=url)
-    return {'content':result.content,
-            'truncated':result.content_was_truncated,
-            'status_code':result.status_code}
+    if codec is None:
+        content = result.content
+    else:
+        try:
+            content = result.content.decode(codec)
+        except:
+            content = result.content
+
+    return {'content':content,'status_code':result.status_code,
+            'truncated':result.content_was_truncated}
 
 class AllHandler(webapp.RequestHandler):
     def jsout(self,json):

@@ -1,5 +1,5 @@
 function Gaedj(server){
-    this.server = server || "http://hellodj.appspot.com/";
+    this.server = server || "http://localhost:8080/";
 }
 Gaedj.cb = [];
 
