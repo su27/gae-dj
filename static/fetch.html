@@ -1,0 +1,25 @@
+<html>
+<head>
+<script type="text/javascript" src="/static/jquery.js"></script>
+<script type="text/javascript" src="/static/gae-dj.js"></script>
+<script type="text/javascript">
+function tr(){
+    if(window.console && window.console.log){$(arguments).each(function(){console.info(this)})}; 
+};
+
+
+var dj = new Gaedj();
+dj.send('fetch?data={"url":"http://google.com/search?q=dead"}',
+    function(r){
+        tr(r);
+        $('#con').html(r.content)
+    }
+)
+
+</script>
+</head>
+<body>
+<div id="con">
+</div>
+</body>
+</html>

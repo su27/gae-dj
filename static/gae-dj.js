@@ -19,7 +19,7 @@ Gaedj.prototype.nload = function(file){
     head.appendChild(e);
     var cleanup = function(){
         setTimeout(function(){
-            try{head.removeChild(e)}catch(e){}
+            try{head.removeChild(e)}catch(err){}
         },100)
     };
     if(msie){
@@ -33,7 +33,7 @@ Gaedj.prototype.nload = function(file){
 }
 
 Gaedj.prototype.send = function(url,cb){
-    var url = this.server+url+(url.indexOf('?') == -1? '?':'&')
+    url = this.server+url+(url.indexOf('?') == -1? '?':'&')
         +'callback=Gaedj.cb['+Gaedj.addcb(cb)+']'
     this.nload(url);
 }
