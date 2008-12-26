@@ -11,26 +11,39 @@ function tr(){
 
 var dj = new Gaedj();
 var killall = function(r){
-    tr('ok,I have to kill:',r);
+    tr('ok,let me try to kill:',r.length);
     for(var i=0;i<r.length;i++){
-        dj.send('delete/mm/'+r[i].id, function(r){tr('kill:',r.success)});
+        dj.send('delete/mm/'+r[i].id, function(r){
+            if(r.success){
+                tr('killing success')
+            }else{
+                tr('kill failed, maybe I need login or I am not the author.')
+            }
+        })
     }
 }
 
 $(function(){
+    dj.send('profile',function(r){
+        tr('you are: '+r.user, ' you can login/logout <a href="'+r.loginurl+'">here</a>')
+    })
     dj.send('model/mm?keys=name,height',function(r){
-        tr('try to make a model',r.success)
+        tr('try to make a model:',r.success)
     });
     dj.send('model/mm?keys=name,age,beau',function(r){
-        tr('try to alter the model',r)
+        tr('try to alter the model:',r.success)
     });
-    dj.send('post/mm?data={"name":"卡拉","beau":"C","age":"34"}',tr);
-    dj.send('post/mm?data={"name":"Ric","beau":"B","age":"15"}',tr);
+    dj.send('post/mm?data={"name":"卡拉","beau":"C","age":"34"}',function(r){
+        tr('insert a record:'+r.success+' with id '+r.id)
+    });
+    dj.send('post/mm?data={"name":"Ric","beau":"B","age":"15"}',function(r){
+        tr('insert a record:'+r.success+' with id '+r.id)
+    });
     dj.send('post/mm?data={"name":"kit","beau":"C","age":"24"}',function(r){
-        tr(r.id,' is ok, lets modify this one');
+        tr('record '+r.id,' inserted, lets modify this one if I can');
         dj.send('modify/mm/'+r.id+'?data={"name":"中文","beau":"B"}',function(r){
             tr('modify:',r.success);
-            dj.send('view/mm/beau/B_C?op=in',function(r){tr('"IN" query:',r)});
+            dj.send('view/mm/beau/B_C?op=in',function(r){tr('query in [B,C]:',r)});
             dj.send('view/mm/beau/C',killall);
             dj.send('view/mm/beau/B',killall)
         })
@@ -39,6 +52,7 @@ $(function(){
 </script>
 </head>
 <body>
+    <h1>data store demo</h1>
     <div id="con"></div> 
 </body>
 </html>

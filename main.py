@@ -313,7 +313,7 @@ class ProfileHandler(AllHandler):
     def get(self):
         user = users.GetCurrentUser()
         name = user and user.nickname() or ''
-        loginurl = os.environ['HTTP_HOST']
+        loginurl = 'http://'+os.environ['HTTP_HOST']
         self.jsout({'user':name,'loginurl':loginurl})
         #for name in os.environ.keys():
         #    self.response.out.write("%s = %s<br />\n" % (name, os.environ[name]))

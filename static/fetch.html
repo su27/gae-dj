@@ -4,22 +4,21 @@
 <script type="text/javascript" src="/static/gae-dj.js"></script>
 <script type="text/javascript">
 function tr(){
-    if(window.console && window.console.log){$(arguments).each(function(){console.info(this)})}; 
+    if(window.console && window.console.info){$(arguments).each(function(){console.info(this)})}; 
 };
-
 
 var dj = new Gaedj();
 //dj.send('fetch?data={"url":"http://www.baidu.com/","decode":"gbk"}',
 dj.send('fetch?data={"url":"http://www.google.cn/","decode":"gbk"}',
     function(r){
-        tr(r);
-        $('#con').html(r.content)
+        $('#con').html(r.content.replace(/Google/g,'BlahBlah'))
     }
 )
 
 </script>
 </head>
 <body>
+    <h1>Grab the page and display below:</h1>
 <div id="con">
 </div>
 </body>
