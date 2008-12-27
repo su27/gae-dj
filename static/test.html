@@ -28,10 +28,10 @@ $(function(){
         tr('you are: '+r.user, ' you can login/logout <a href="'+r.loginurl+'">here</a>')
     })
     dj.send('model/mm?keys=name,height',function(r){
-        tr('try to make a model:',r.success)
+        tr('try to make a model(must login):',r.success)
     });
     dj.send('model/mm?keys=name,age,beau',function(r){
-        tr('try to alter the model:',r.success)
+        tr('try to alter the model(must be creater):',r.success)
     });
     dj.send('post/mm?data={"name":"卡拉","beau":"C","age":"34"}',function(r){
         tr('insert a record:'+r.success+' with id '+r.id)

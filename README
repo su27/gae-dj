@@ -1,8 +1,13 @@
-GAE-DJ: RESTful api for GAE database writing/reading and other GAE funny things like url fetching.
-        It's designed specially for cross-domain javascript
+GAE-DJ implemented a RESTful api for GAE database writing/reading and 
+also for other GAE funny things like url fetching.
+
+It's designed particularly for cross-domain javascript access.
+check /static/*.html as demos.
+
+author:damn.su@gmail.com
 
 
-========database=======
+========database api=======
 
 create(must login) or modify(must be creator) model:
     get /model/[MODEL_NAME]?[PARAS]
@@ -58,6 +63,7 @@ get /profile
 just check /static/*.html as demos!
 
 <script type="text/javascript" src="/static/gae-dj.js"></script>
+
 var dj = new Gaedj();
 dj.send('model/mm?keys=name,height',function(r){
     alert('try to make a model:'+r.success)

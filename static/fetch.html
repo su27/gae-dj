@@ -8,14 +8,17 @@ function tr(){
 };
 
 var dj = new Gaedj();
-//dj.send('fetch?data={"url":"http://www.baidu.com/","decode":"gbk"}',
-dj.send('fetch?data={"url":"http://www.google.cn/","decode":"gbk"}',
+//dj.send('fetch?data={"url":"http://jiwai.de/public_timeline/","decode":"utf-8"}',
+dj.send('fetch?data={"url":"http://g.cn","decode":"gbk"}',
     function(r){
-        $('#con').html(r.content.replace(/Google/g,'BlahBlah'))
+    $('#con').html(r.content.replace(/script/g,'em'))
     }
 )
-
 </script>
+<style type="text/css">
+    em{display:none}
+    #con{border:3px dashed #999;}
+</style>
 </head>
 <body>
     <h1>Grab the page and display below:</h1>

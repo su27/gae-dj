@@ -252,7 +252,6 @@ def handle_fetch(request):
     if headers is not None:
         fetchreq['headers'] = headers
     try:
-        logging.info(fetchreq)
         result = urlfetch.fetch(**fetchreq)
     except InvalidURLError:
         return msg(12,url=url)
@@ -306,6 +305,7 @@ class ModelHandler(AllHandler):
 class FetchHandler(AllHandler):
     def get(self):
         self.jsout(handle_fetch(self.request))
+
     def post(self):
         self.jsout(handle_fetch(self.request))
 
