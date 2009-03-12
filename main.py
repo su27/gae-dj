@@ -15,6 +15,7 @@ from google.appengine.api import users,memcache,urlfetch
 from google.appengine.api.urlfetch import InvalidURLError,\
         DownloadError
 import simplejson
+from doc import readme
 
 class Modinfo(db.Model):
     acc = db.UserProperty()
@@ -321,6 +322,7 @@ class ProfileHandler(AllHandler):
 class MainHandler(webapp.RequestHandler):
     def get(self):
         self.response.out.write(greeting(users.GetCurrentUser()))
+        self.response.out.write(readme())
 
 def main():
     application = webapp.WSGIApplication([('/', MainHandler),
