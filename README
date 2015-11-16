@@ -69,7 +69,7 @@ dj.send('model/mm?keys=name,height',function(r){
     alert('try to make a model:'+r.success)
 });
 
-dj.send('fetch?data={"url":"http://g.cn/","decode":"gbk"}',function(r){
+dj.send('fetch?data={"url":"http://g.cn/" ,"decode":"gbk"}',function(r){
         $('#con').html(r.content)
 })
 
